@@ -1,0 +1,12 @@
+body {
+  padding: 0;
+}
+
+.controlls {
+  display: flex;
+  justify-content: center;
+}
+
+.btn {
+  padding: 1rem 3rem;
+}
