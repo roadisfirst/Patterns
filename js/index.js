@@ -1,69 +1,48 @@
 //Component
 class Employee {
-    static countElems = 0;
     static get EMPLOYEES(){
         if (!this._EMPLOYEES){
             this._EMPLOYEES = [];
         }
         return this._EMPLOYEES;
     }
-    constructor({id, rm_id, name, performance, last_vacation_date, salary}){
-        this.id = id;
-        this.rm_id = rm_id;
-        this.name = name;
-        this.performance = performance;
-        this.last_vacation_date = last_vacation_date;
-        this.salary =salary;
+    constructor(props){
+        this.id = props.id;
+        this.rm_id = props.rm_id;
+        this.name = props.name;
+        this.performance = props.performance;
+        this.last_vacation_date = props.last_vacation_date;
+        this.salary = props.salary;
+        this.strategy = '';
 
+        this.setStrategy = (strategy) => { 
+          this.strategy = strategy;
+        }
+        this.showInfo = (workers) => this.strategy.showInfo(workers);
         this.parentsNum = 0;
-        this.elemPrefix = '';
-        Employee.countElems++;
         Employee.EMPLOYEES.push(this);
     }
+
     getSalary() {
         return this.salary;
     }
 
-    showHierarchy (){ // выводит иерархию всех элементов Компоновщика
-        this.elemPrefix = this.setPrefixLength(this.parentsNum);
-    }
+    getPerformance() {
+      return this.performance;
+  }
 
-    setPrefixLength(count) { //функция определяет длину префикса elemPrefix выводимого в ShowHierarchy()
-        let pre = '';
-        for (let i = 0; i < count; i++) {
-            pre += '----';
-        }
-        return pre;
+    showHierarchy (){
+        return this.name;
     }
 }
 //Leaf
-class Developer extends Employee {
-    constructor(...args){
-        super(...args)
-    }
-
-    getSalary() {
-        return this.salary;
-    }
-
-    showHierarchy (){
-        super.showHierarchy();
-        console.log(this.elemPrefix + this.name)
-    }
-}
+class Developer extends Employee {}
 //Composite
 class RM extends Employee {
-constructor ({id, rm_id, name, performance, last_vacation_date, salary, pool_name}){
-        super(id, rm_id, name, performance, last_vacation_date, salary)
-        this.pool=[]
-        this.pool_name = pool_name;
-    }
-
-    showHierarchy (){
-        super.showHierarchy();
-        console.log(this.elemPrefix + this.name + ' (RM)')
-        for(let i in this.pool)
-            this.pool[i].showHierarchy();
+constructor (props){
+        super(props)
+        this.pool=[];
+        this.pool_name = props.pool_name;
     }
 
     add(employee){
@@ -72,835 +51,225 @@ constructor ({id, rm_id, name, performance, last_vacation_date, salary, pool_nam
         this.pool.push(employee);
       }
 
-      remove(employee){
-        for(let i in this.pool){
-            if(this.pool[i] === employee)
-                this.pool.splice(i, 1);
+    remove(employee){
+      for(let i in this.pool){
+        if(this.pool[i] === employee){
+          this.pool.splice(i, 1);
         }
+      }
     }
 }
 
+class UnitsStrategy {
+  constructor() {
+    this.showInfo = function (workers) {
+      let avrgSalary;
+      let unitPerfomance = { 'low': 0, 'average': 0, 'top': 0 };
+      let sumSalary = 0;
+      let performance, avrgPerfomance;
+      const rounding = 0;
+      for (let i in workers) {
+        if (workers.hasOwnProperty(i)){
+          sumSalary = sumSalary + workers[i].getSalary();
+          performance = workers[i].getPerformance();
+          unitPerfomance[performance] += 1;
+        }
+      }
+      let maxValue = Math.max.apply(Math, Object.values(unitPerfomance).map(val => val));
+      avrgPerfomance = Object.keys(unitPerfomance).find(key => unitPerfomance[key] === maxValue);
+      avrgSalary = sumSalary / workers.length;
+      return { avrgSalary: avrgSalary.toFixed(rounding), avrgPerfomance: avrgPerfomance };
+    };
+  }
+}
 
-// let c = new RM("1", null, "Ange Quittonden", "top", "24.04.2018", 1415, "Top pool");
-// let a = new Developer("2","1", "Bobina Pascow", "low", "26.12.2018", 1248);
-// let b = new RM("7","1", "Marybelle Kelston", "top", "13.03.2018", 1382, "Oscar");
+class IndividualStrategy {
+  constructor() {
+    this.showInfo = function (worker) {
+      return { salary: worker.getSalary(), performance: worker.getPerformance() };
+    };
+  }
+}
 
-// c.add(a);
-// c.add(b);
+const unitsStrategy = new UnitsStrategy();
+const individualStrategy = new IndividualStrategy();
 
-
-
-const mock = [
-    {
-      "id": 1,
-      "rm_id": null,
-      "name": "Ange Quittonden",
-      "performance": "top",
-      "last_vacation_date": "24.04.2018",
-      "salary": 1415,
-      "pool_name": "Top pool"
-    },
-    {
-      "id": 2,
-      "rm_id": 1,
-      "name": "Bobina Pascow",
-      "performance": "low",
-      "last_vacation_date": "26.12.2018",
-      "salary": 1248
-    },
-    {
-      "id": 3,
-      "rm_id": 1,
-      "name": "Hashim Stein",
-      "performance": "top",
-      "last_vacation_date": "07.06.2019",
-      "salary": 679
-    },
-    {
-      "id": 4,
-      "rm_id": 1,
-      "name": "Bernadene Gillum",
-      "performance": "average",
-      "last_vacation_date": "19.10.2019",
-      "salary": 1484
-    },
-    {
-      "id": 5,
-      "rm_id": 1,
-      "name": "Yale Masedon",
-      "performance": "average",
-      "last_vacation_date": "10.03.2020",
-      "salary": 583
-    },
-    {
-      "id": 6,
-      "rm_id": 1,
-      "name": "Ellissa Cayton",
-      "performance": "top",
-      "last_vacation_date": "26.10.2019",
-      "salary": 1289
-    },
-    {
-      "id": 7,
-      "rm_id": 1,
-      "name": "Marybelle Kelston",
-      "performance": "top",
-      "last_vacation_date": "13.03.2018",
-      "salary": 1382,
-      "pool_name": "Oscar"
-    },
-    {
-      "id": 8,
-      "rm_id": 1,
-      "name": "Vevay Cowern",
-      "performance": "average",
-      "last_vacation_date": "17.11.2018",
-      "salary": 1301
-    },
-    {
-      "id": 9,
-      "rm_id": 1,
-      "name": "Bondy Ridolfo",
-      "performance": "low",
-      "last_vacation_date": "15.06.2018",
-      "salary": 1146
-    },
-    {
-      "id": 10,
-      "rm_id": 1,
-      "name": "Valenka Macguire",
-      "performance": "low",
-      "last_vacation_date": "03.05.2017",
-      "salary": 1236
-    },
-    {
-      "id": 11,
-      "rm_id": 7,
-      "name": "Irene Prodrick",
-      "performance": "low",
-      "last_vacation_date": "06.01.2019",
-      "salary": 1371
-    },
-    {
-      "id": 12,
-      "rm_id": 7,
-      "name": "Ella Kilpin",
-      "performance": "top",
-      "last_vacation_date": "08.11.2018",
-      "salary": 739
-    },
-    {
-      "id": 13,
-      "rm_id": 7,
-      "name": "Raeann Regenhardt",
-      "performance": "top",
-      "last_vacation_date": "19.01.2018",
-      "salary": 1450
-    },
-    {
-      "id": 14,
-      "rm_id": 7,
-      "name": "Emile Jobbins",
-      "performance": "low",
-      "last_vacation_date": "03.09.2019",
-      "salary": 1452
-    },
-    {
-      "id": 15,
-      "rm_id": 1,
-      "name": "Richard D'Antonio",
-      "performance": "low",
-      "last_vacation_date": "20.08.2019",
-      "salary": 788
-    },
-    {
-      "id": 16,
-      "rm_id": 7,
-      "name": "Nikos Gude",
-      "performance": "average",
-      "last_vacation_date": "10.01.2018",
-      "salary": 790
-    },
-    {
-      "id": 17,
-      "rm_id": 1,
-      "name": "Ulrikaumeko Verrill",
-      "performance": "average",
-      "last_vacation_date": "19.04.2017",
-      "salary": 703
-    },
-    {
-      "id": 18,
-      "rm_id": 7,
-      "name": "Gelya Mateu",
-      "performance": "top",
-      "last_vacation_date": "05.03.2019",
-      "salary": 956
-    },
-    {
-      "id": 19,
-      "rm_id": 1,
-      "name": "Lauretta Ripper",
-      "performance": "average",
-      "last_vacation_date": "02.03.2018",
-      "salary": 863
-    },
-    {
-      "id": 20,
-      "rm_id": 7,
-      "name": "Emelina Whiff",
-      "performance": "average",
-      "last_vacation_date": "30.09.2018",
-      "salary": 775
-    },
-    {
-      "id": 21,
-      "rm_id": 1,
-      "name": "Kristofer Crawley",
-      "performance": "top",
-      "last_vacation_date": "12.09.2019",
-      "salary": 1167
-    },
-    {
-      "id": 22,
-      "rm_id": 1,
-      "name": "Libbie Sandes",
-      "performance": "top",
-      "last_vacation_date": "26.09.2018",
-      "salary": 1164
-    },
-    {
-      "id": 23,
-      "rm_id": 7,
-      "name": "Jaclyn Slopier",
-      "performance": "top",
-      "last_vacation_date": "11.07.2018",
-      "salary": 1487
-    },
-    {
-      "id": 24,
-      "rm_id": 1,
-      "name": "Fowler Ricardot",
-      "performance": "top",
-      "last_vacation_date": "07.01.2018",
-      "salary": 1483
-    },
-    {
-      "id": 25,
-      "rm_id": 1,
-      "name": "Zebadiah Gowrich",
-      "performance": "average",
-      "last_vacation_date": "15.02.2018",
-      "salary": 1190
-    },
-    {
-      "id": 26,
-      "rm_id": 7,
-      "name": "Maudie Jorge",
-      "performance": "top",
-      "last_vacation_date": "08.01.2020",
-      "salary": 505
-    },
-    {
-      "id": 27,
-      "rm_id": 7,
-      "name": "Kym Bottjer",
-      "performance": "average",
-      "last_vacation_date": "27.02.2018",
-      "salary": 556
-    },
-    {
-      "id": 28,
-      "rm_id": 7,
-      "name": "Brandea Simenot",
-      "performance": "average",
-      "last_vacation_date": "30.06.2018",
-      "salary": 660,
-      "pool_name": "Sierra"
-    },
-    {
-      "id": 29,
-      "rm_id": 28,
-      "name": "Quill Kingdon",
-      "performance": "low",
-      "last_vacation_date": "11.12.2017",
-      "salary": 1263
-    },
-    {
-      "id": 30,
-      "rm_id": 28,
-      "name": "Tyrus Jillett",
-      "performance": "average",
-      "salary": 551,
-      "pool_name": "Uniform"
-    },
-    {
-      "id": 31,
-      "rm_id": 1,
-      "name": "Anne Skurm",
-      "performance": "low",
-      "salary": 1012
-    },
-    {
-      "id": 32,
-      "rm_id": 7,
-      "name": "Louisa Jiruch",
-      "performance": "top",
-      "last_vacation_date": "27.09.2019",
-      "salary": 1148
-    },
-    {
-      "id": 33,
-      "rm_id": 28,
-      "name": "Leanor Giabucci",
-      "performance": "average",
-      "salary": 1300
-    },
-    {
-      "id": 34,
-      "rm_id": 1,
-      "name": "Saw Yarn",
-      "performance": "average",
-      "last_vacation_date": "17.02.2019",
-      "salary": 1042
-    },
-    {
-      "id": 35,
-      "rm_id": 28,
-      "name": "Payton Clinkard",
-      "performance": "top",
-      "last_vacation_date": "27.02.2018",
-      "salary": 1383
-    },
-    {
-      "id": 36,
-      "rm_id": 30,
-      "name": "Wernher Shawl",
-      "performance": "average",
-      "last_vacation_date": "11.02.2018",
-      "salary": 897
-    },
-    {
-      "id": 37,
-      "rm_id": 28,
-      "name": "Elora Plews",
-      "performance": "average",
-      "last_vacation_date": "01.09.2019",
-      "salary": 1086
-    },
-    {
-      "id": 38,
-      "rm_id": 30,
-      "name": "Erda Steedman",
-      "performance": "top",
-      "last_vacation_date": "26.11.2019",
-      "salary": 569
-    },
-    {
-      "id": 39,
-      "rm_id": 30,
-      "name": "Clarke Plum",
-      "performance": "low",
-      "last_vacation_date": "15.10.2017",
-      "salary": 996
-    },
-    {
-      "id": 40,
-      "rm_id": 28,
-      "name": "Holmes Dondon",
-      "performance": "average",
-      "last_vacation_date": "03.06.2017",
-      "salary": 1323
-    },
-    {
-      "id": 41,
-      "rm_id": 28,
-      "name": "Coletta Davall",
-      "performance": "average",
-      "last_vacation_date": "21.03.2019",
-      "salary": 981
-    },
-    {
-      "id": 42,
-      "rm_id": 1,
-      "name": "Gipsy Vankin",
-      "performance": "average",
-      "last_vacation_date": "07.05.2017",
-      "salary": 1099
-    },
-    {
-      "id": 43,
-      "rm_id": 30,
-      "name": "Theodoric Padell",
-      "performance": "low",
-      "last_vacation_date": "22.08.2018",
-      "salary": 1348
-    },
-    {
-      "id": 44,
-      "rm_id": 28,
-      "name": "Anallise Goodenough",
-      "performance": "low",
-      "salary": 868
-    },
-    {
-      "id": 45,
-      "rm_id": 1,
-      "name": "Tandi Gonin",
-      "performance": "low",
-      "last_vacation_date": "18.11.2017",
-      "salary": 811
-    },
-    {
-      "id": 46,
-      "rm_id": 30,
-      "name": "Dru Trittam",
-      "performance": "average",
-      "last_vacation_date": "20.05.2019",
-      "salary": 565
-    },
-    {
-      "id": 47,
-      "rm_id": 1,
-      "name": "Sigismund Shales",
-      "performance": "low",
-      "last_vacation_date": "19.09.2018",
-      "salary": 1110
-    },
-    {
-      "id": 48,
-      "rm_id": 1,
-      "name": "Brendin Rubel",
-      "performance": "average",
-      "last_vacation_date": "01.02.2018",
-      "salary": 865,
-      "pool_name": "Kilo"
-    },
-    {
-      "id": 49,
-      "rm_id": 30,
-      "name": "Jana Rodgier",
-      "performance": "low",
-      "last_vacation_date": "23.10.2017",
-      "salary": 1025
-    },
-    {
-      "id": 50,
-      "rm_id": 30,
-      "name": "Geoff Real",
-      "performance": "average",
-      "last_vacation_date": "19.11.2018",
-      "salary": 1104
-    },
-    {
-      "id": 51,
-      "rm_id": 30,
-      "name": "Dalli Spuner",
-      "performance": "top",
-      "salary": 1050
-    },
-    {
-      "id": 52,
-      "rm_id": 28,
-      "name": "Ric Olner",
-      "performance": "top",
-      "salary": 1048
-    },
-    {
-      "id": 53,
-      "rm_id": 7,
-      "name": "Inessa Simcox",
-      "performance": "average",
-      "last_vacation_date": "07.07.2018",
-      "salary": 812
-    },
-    {
-      "id": 54,
-      "rm_id": 30,
-      "name": "Lauritz Denerley",
-      "performance": "average",
-      "last_vacation_date": "23.12.2018",
-      "salary": 797
-    },
-    {
-      "id": 55,
-      "rm_id": 30,
-      "name": "Trudey Mewett",
-      "performance": "top",
-      "last_vacation_date": "09.09.2018",
-      "salary": 1141
-    },
-    {
-      "id": 56,
-      "rm_id": 48,
-      "name": "Dieter Dufty",
-      "performance": "average",
-      "last_vacation_date": "19.04.2017",
-      "salary": 1451
-    },
-    {
-      "id": 57,
-      "rm_id": 7,
-      "name": "Jobey Kondrat",
-      "performance": "low",
-      "last_vacation_date": "04.07.2018",
-      "salary": 671
-    },
-    {
-      "id": 58,
-      "rm_id": 48,
-      "name": "Benton Smyley",
-      "performance": "top",
-      "last_vacation_date": "03.04.2019",
-      "salary": 810
-    },
-    {
-      "id": 59,
-      "rm_id": 7,
-      "name": "Ramsey Strase",
-      "performance": "low",
-      "last_vacation_date": "03.05.2017",
-      "salary": 1223
-    },
-    {
-      "id": 60,
-      "rm_id": 7,
-      "name": "Lynnet Haliday",
-      "performance": "low",
-      "last_vacation_date": "06.10.2019",
-      "salary": 1225
-    },
-    {
-      "id": 61,
-      "rm_id": 7,
-      "name": "Alfie Huxham",
-      "performance": "top",
-      "last_vacation_date": "25.11.2018",
-      "salary": 1340
-    },
-    {
-      "id": 62,
-      "rm_id": 28,
-      "name": "Jaquenetta Wrefford",
-      "performance": "average",
-      "last_vacation_date": "23.09.2018",
-      "salary": 638
-    },
-    {
-      "id": 63,
-      "rm_id": 48,
-      "name": "Roldan Hast",
-      "performance": "top",
-      "last_vacation_date": "13.09.2017",
-      "salary": 963
-    },
-    {
-      "id": 64,
-      "rm_id": 28,
-      "name": "Pam De Hailes",
-      "performance": "low",
-      "last_vacation_date": "02.11.2018",
-      "salary": 585
-    },
-    {
-      "id": 65,
-      "rm_id": 1,
-      "name": "Zelda Reggio",
-      "performance": "average",
-      "last_vacation_date": "09.04.2017",
-      "salary": 625
-    },
-    {
-      "id": 66,
-      "rm_id": 7,
-      "name": "Dinah Linny",
-      "performance": "top",
-      "last_vacation_date": "31.05.2018",
-      "salary": 1242
-    },
-    {
-      "id": 67,
-      "rm_id": 30,
-      "name": "Fernanda Yeowell",
-      "performance": "average",
-      "salary": 887
-    },
-    {
-      "id": 68,
-      "rm_id": 48,
-      "name": "Curr Alecock",
-      "performance": "average",
-      "salary": 511
-    },
-    {
-      "id": 69,
-      "rm_id": 7,
-      "name": "Sarene Pidgeon",
-      "performance": "average",
-      "last_vacation_date": "19.08.2019",
-      "salary": 1437,
-      "pool_name": "Echo"
-    },
-    {
-      "id": 70,
-      "rm_id": 1,
-      "name": "Conroy Cominello",
-      "performance": "low",
-      "last_vacation_date": "27.04.2019",
-      "salary": 508
-    },
-    {
-      "id": 71,
-      "rm_id": 1,
-      "name": "Ron Oldridge",
-      "performance": "average",
-      "last_vacation_date": "15.04.2019",
-      "salary": 780
-    },
-    {
-      "id": 72,
-      "rm_id": 69,
-      "name": "Ara Carter",
-      "performance": "top",
-      "last_vacation_date": "06.06.2019",
-      "salary": 1240
-    },
-    {
-      "id": 73,
-      "rm_id": 48,
-      "name": "Fredelia Dummett",
-      "performance": "top",
-      "last_vacation_date": "08.08.2019",
-      "salary": 1019
-    },
-    {
-      "id": 74,
-      "rm_id": 30,
-      "name": "Jayne Luna",
-      "performance": "average",
-      "last_vacation_date": "02.05.2017",
-      "salary": 1085
-    },
-    {
-      "id": 75,
-      "rm_id": 7,
-      "name": "Melvyn Beyn",
-      "performance": "top",
-      "last_vacation_date": "20.06.2017",
-      "salary": 1139,
-      "pool_name": "Quebec"
-    },
-    {
-      "id": 76,
-      "rm_id": 75,
-      "name": "Justis Wilsee",
-      "performance": "top",
-      "last_vacation_date": "05.10.2017",
-      "salary": 944
-    },
-    {
-      "id": 77,
-      "rm_id": 75,
-      "name": "Tynan Sturney",
-      "performance": "low",
-      "last_vacation_date": "08.12.2019",
-      "salary": 1441
-    },
-    {
-      "id": 78,
-      "rm_id": 28,
-      "name": "Ora Passman",
-      "performance": "low",
-      "last_vacation_date": "18.01.2018",
-      "salary": 1025
-    },
-    {
-      "id": 79,
-      "rm_id": 69,
-      "name": "Danielle Calven",
-      "performance": "average",
-      "last_vacation_date": "30.12.2019",
-      "salary": 824
-    },
-    {
-      "id": 80,
-      "rm_id": 48,
-      "name": "Murdoch Fidal",
-      "performance": "low",
-      "last_vacation_date": "02.04.2017",
-      "salary": 694
-    },
-    {
-      "id": 81,
-      "rm_id": 48,
-      "name": "Ralph Lere",
-      "performance": "top",
-      "last_vacation_date": "02.12.2019",
-      "salary": 601,
-      "pool_name": "Romeo"
-    },
-    {
-      "id": 82,
-      "rm_id": 7,
-      "name": "Viviana Staziker",
-      "performance": "low",
-      "last_vacation_date": "23.11.2019",
-      "salary": 864
-    },
-    {
-      "id": 83,
-      "rm_id": 1,
-      "name": "Ennis Twatt",
-      "performance": "low",
-      "last_vacation_date": "27.05.2019",
-      "salary": 1213
-    },
-    {
-      "id": 84,
-      "rm_id": 30,
-      "name": "Derrick Wybrow",
-      "performance": "top",
-      "last_vacation_date": "30.11.2018",
-      "salary": 1360
-    },
-    {
-      "id": 85,
-      "rm_id": 69,
-      "name": "Walt O'Cridigan",
-      "performance": "average",
-      "last_vacation_date": "24.09.2018",
-      "salary": 519
-    },
-    {
-      "id": 86,
-      "rm_id": 81,
-      "name": "Jany Farans",
-      "performance": "top",
-      "last_vacation_date": "02.02.2018",
-      "salary": 727
-    },
-    {
-      "id": 87,
-      "rm_id": 75,
-      "name": "Anet Landsbury",
-      "performance": "low",
-      "salary": 716
-    },
-    {
-      "id": 88,
-      "rm_id": 1,
-      "name": "Bartel Kryzhov",
-      "performance": "average",
-      "last_vacation_date": "02.12.2019",
-      "salary": 587
-    },
-    {
-      "id": 89,
-      "rm_id": 1,
-      "name": "Caron Jarvis",
-      "performance": "average",
-      "last_vacation_date": "04.08.2017",
-      "salary": 1183
-    },
-    {
-      "id": 90,
-      "rm_id": 48,
-      "name": "Nathanael Stood",
-      "performance": "average",
-      "last_vacation_date": "07.12.2017",
-      "salary": 1297,
-      "pool_name": "Alfa"
-    },
-    {
-      "id": 91,
-      "rm_id": 69,
-      "name": "Cchaddie Maw",
-      "performance": "top",
-      "last_vacation_date": "08.05.2019",
-      "salary": 893,
-      "pool_name": "Kentavra"
-    },
-    {
-      "id": 92,
-      "rm_id": 90,
-      "name": "Winn Yu",
-      "performance": "low",
-      "last_vacation_date": "20.03.2019",
-      "salary": 1362
-    },
-    {
-      "id": 93,
-      "rm_id": 28,
-      "name": "Sonya Claasen",
-      "performance": "top",
-      "last_vacation_date": "27.05.2018",
-      "salary": 633
-    },
-    {
-      "id": 94,
-      "rm_id": 28,
-      "name": "Callie Foy",
-      "performance": "top",
-      "last_vacation_date": "04.08.2017",
-      "salary": 1027
-    },
-    {
-      "id": 95,
-      "rm_id": 7,
-      "name": "Torey Cayford",
-      "performance": "top",
-      "last_vacation_date": "21.02.2019",
-      "salary": 857
-    },
-    {
-      "id": 96,
-      "rm_id": 81,
-      "name": "Horatia Woloschinski",
-      "performance": "average",
-      "last_vacation_date": "02.06.2019",
-      "salary": 577
-    },
-    {
-      "id": 97,
-      "rm_id": 91,
-      "name": "Nell Parcell",
-      "performance": "top",
-      "last_vacation_date": "01.02.2019",
-      "salary": 802
-    },
-    {
-      "id": 98,
-      "rm_id": 1,
-      "name": "Leone Hurdiss",
-      "performance": "low",
-      "salary": 1453
-    },
-    {
-      "id": 99,
-      "rm_id": 75,
-      "name": "Oona Garrat",
-      "performance": "average",
-      "last_vacation_date": "14.03.2019",
-      "salary": 1329
-    },
-    {
-      "id": 100,
-      "rm_id": 91,
-      "name": "Felicle Roostan",
-      "performance": "top",
-      "last_vacation_date": "05.08.2019",
-      "salary": 699
+const showInnerPull = (employee) => {
+  let parentLiId = `worker${employee.id}`;
+  if(employee.pool){
+    const li = document.getElementById(parentLiId);
+    li.classList.add('rm-style');
+    let innerOl = document.createElement('ol');
+    li.append(innerOl);
+    for(let i in employee.pool){
+      if (employee.pool.hasOwnProperty(i)){
+        let innerLi = document.createElement('li');
+        let innerSpan = document.createElement('span');
+        innerLi.id = `worker${employee.pool[i].id}`;
+        innerSpan.innerHTML = employee.pool[i].showHierarchy();
+        innerLi.append(innerSpan);
+        innerOl.append(innerLi);
+        showInnerPull(employee.pool[i]);
+      }
     }
-  ]
+  }
+}
 
+const idNameCreator = (str) => { 
+  return str.replace(/\s+/g, '-').toLowerCase();
+}
 
+const showInnerUnit = (employee) => {
+  if(employee.pool){
+    let ulId = idNameCreator(employee.pool_name);
+    let parentUl = document.getElementById(ulId);
+    if(!parentUl) {
+      parentUl = document.createElement('ul');
+      parentUl.id = ulId;
+      let liId = `list-${employee.rm_id}`;
+      let parentLi = document.getElementById(liId);
+      parentLi.append(parentUl);
+    }
+    let liId = `list-${employee.id}`;
+    let li = document.createElement('li');
+    li.id = liId;
+    let avrgInfo = employee.showInfo(employee.pool);
+    li.innerHTML = `<h3>${employee.pool_name}</h3><p>Average salary by pool: 
+      <span class='accent'>${avrgInfo.avrgSalary}</span></p>
+      <p>Average performance by pool: <span class="accent">${avrgInfo.avrgPerfomance}</span></p>`;
+    parentUl.append(li);
+    for(let i in employee.pool){
+      if (employee.pool.hasOwnProperty(i)){
+        showInnerUnit(employee.pool[i]);
+      }
+    }
+  }
+}
 
-  mock.forEach((elem, index) => {
+const clearPage = () => {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+}
+
+const showAllEmployees = () => {
+  clearPage();
+  const list = document.getElementById('list');
+  const head = Employee.EMPLOYEES[0];
+  let ol = document.createElement('ol');
+  ol.classList.add('workers-list');
+  let li = document.createElement('li');
+  let span = document.createElement('span');
+  li.id = `worker${head.id}`;
+  span.innerHTML = head.showHierarchy();
+  li.append(span);
+  ol.append(li);
+  list.append(ol);
+  showInnerPull(head);
+}
+
+const showAllUnits = () => {
+  clearPage();
+  const list = document.getElementById('list');
+  const head = Employee.EMPLOYEES[0];
+  let ul = document.createElement('ul');
+  ul.classList.add('units-list');
+  ul.id = idNameCreator(head.pool_name);
+  list.append(ul);
+  showInnerUnit(head);
+}
+
+const showWarningEmployees = () => {
+  clearPage();
+  const warningEmployees = [];
+  Employee.EMPLOYEES.forEach(worker => {
+    if(worker instanceof Developer){
+      let workerRM = Employee.EMPLOYEES.filter(person => person.id === worker.rm_id && person.pool.includes(worker))[0];
+      let avrgPoolData = workerRM.showInfo(workerRM.pool);
+      let workerData = worker.showInfo(worker);
+      if(workerData.salary > avrgPoolData.avrgSalary && worker.getPerformance() === 'low'){
+        warningEmployees.push(worker);
+      }
+    }
+  })
+  let list = document.getElementById('list');
+  let p = document.createElement('p');
+  p.classList.add('warning-criterions');
+  p.innerHTML = `<span class='accent'>Performance: low, salary: above avarage by pool</span>`;
+  list.append(p);
+  let ol = document.createElement('ol');
+  ol.id = 'warning-list';
+  warningEmployees.forEach(person => {
+    let li = document.createElement('li');
+    li.classList.add('warning-list-item')
+    li.innerHTML = `${person.name}: performance <span class='accent'>${person.performance}</span> 
+      and salary <span class='accent'>${person.salary}</span>`;
+    ol.append(li);
+  })
+  p.after(ol);
+}
+
+document.onclick = function(event){
+  if(event.target && event.target.id === 'allEmployees'){
+    showAllEmployees();
+  }
+  if(event.target && event.target.id === 'allUnits'){
+    showAllUnits();
+  }
+  if(event.target && event.target.id === 'warningEmployees'){
+    showWarningEmployees();
+  }
+}
+
+const fillPool = (rmId) => {
+  let pull = Employee.EMPLOYEES.filter(worker => worker.rm_id === rmId);
+  let rm = Employee.EMPLOYEES.filter(worker => worker.id === rmId);
+  pull.forEach(worker => {
+    rm[0].add(worker);
+  })
+}
+
+const getEmployees = () => {
+  const data = fetch('../mock.JSON')
+    .then(response => response.json())
+    .then(data => data.forEach((elem, index) => {
       let name = 'worker' + (index+1);
-      console.log(name);
-    if(elem["pool_name"]){
+      if(elem['pool_name']){
         name = new RM(elem);
-    } else {
+        name.setStrategy(unitsStrategy);
+      } else {
         name = new Developer(elem);
-    }
-})
+        name.setStrategy(individualStrategy);
+      }
+    })
+    )
+    .then(() => Employee.EMPLOYEES.forEach(worker => {
+      if(worker instanceof RM){
+        fillPool(worker.id);
+      }
+    })
+    )
+  return data;
+}
+
+const mock = getEmployees();
+
+// async function getEmployees() {
+//   const response = await fetch('../mock.JSON');
+//   const data = await response.json();
+//   data.forEach((elem, index) => {
+//       let name = 'worker' + (index+1);
+//       if(elem['pool_name']){
+//           name = new RM(elem);
+//           name.setStrategy(unitsStrategy);
+//       } else {
+//           name = new Developer(elem);
+//           name.setStrategy(individualStrategy);
+//       }
+//   })
+//   Employee.EMPLOYEES.forEach(worker => {
+//     if(worker instanceof RM){
+//       fillPool(worker.id);
+//     }
+//   })
+//   return data;
+// }
